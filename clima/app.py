@@ -7,17 +7,16 @@ from flask import Flask, render_template
 
 app = Flask(__name__)
 
-
 API_KEY = "34c7ecd702364c61a2ea050779f06a97"
-
 CITY = "Sao Paulo"
+JSON_FILE = "dados_climaticos.json"  # Arquivo onde os dados serão armazenados
 
 def coletar_dados():
-    """Coleta dados de temperatura e umidade da API OpenWeatherMap."""
+    """Coleta dados de temperatura e umidade da API OpenWeatherMap e salva em JSON."""
     try:
         url = f"http://api.openweathermap.org/data/2.5/weather?q={CITY}&appid={API_KEY}&units=metric"
         response = requests.get(url)
-        response.raise_for_status()  
+        response.raise_for_status()
         data = response.json()
 
         temperatura = data["main"]["temp"]
@@ -27,7 +26,7 @@ def coletar_dados():
 
         if 200 <= clima_id < 300:
             clima = "chuva"
-            emoji = "️"
+            emoji = "🌧️"
         elif 300 <= clima_id < 600:
             clima = "nublado"
             emoji = "☁️"
@@ -38,7 +37,18 @@ def coletar_dados():
             clima = "desconhecido"
             emoji = "❓"
 
-        return {"data_hora": data_hora, "temperatura": temperatura, "umidade": umidade, "clima": clima, "emoji": emoji}
+        novo_dado = {
+            "data_hora": data_hora,
+            "temperatura": temperatura,
+            "umidade": umidade,
+            "clima": clima,
+            "emoji": emoji
+        }
+
+        # Salvar no JSON
+        salvar_dados(novo_dado)
+
+        return novo_dado
 
     except requests.exceptions.RequestException as e:
         print(f"Erro ao coletar dados: {e}")
@@ -47,10 +57,44 @@ def coletar_dados():
         print(f"Erro ao processar dados da API: {e}")
         return None
 
-def gerar_grafico(dados):
-    """Gera um gráfico com os dados de temperatura e umidade."""
+def salvar_dados(dado):
+    """Salva os dados coletados no arquivo JSON."""
+    try:
+        # Tenta carregar os dados existentes
+        try:
+            with open(JSON_FILE, "r") as file:
+                dados = json.load(file)
+        except (FileNotFoundError, json.JSONDecodeError):
+            dados = []
+
+        # Adiciona o novo dado à lista
+        dados.append(dado)
+
+        # Mantém apenas os últimos 100 registros (opcional)
+        if len(dados) > 100:
+            dados = dados[-100:]
+
+        # Escreve no arquivo JSON
+        with open(JSON_FILE, "w") as file:
+            json.dump(dados, file, indent=4)
+
+    except Exception as e:
+        print(f"Erro ao salvar dados no JSON: {e}")
+
+def carregar_dados():
+    """Carrega os dados armazenados no JSON."""
+    try:
+        with open(JSON_FILE, "r") as file:
+            return json.load(file)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return []
+
+def gerar_grafico():
+    """Gera um gráfico com os dados de temperatura e umidade do JSON."""
+    dados = carregar_dados()
+
     if dados:
-        df = pd.DataFrame([dados])
+        df = pd.DataFrame(dados)
         df["data_hora"] = pd.to_datetime(df["data_hora"])
 
         fig = go.Figure()
@@ -65,7 +109,7 @@ def gerar_grafico(dados):
 @app.route("/")
 def index():
     dados = coletar_dados()
-    grafico_html = gerar_grafico(dados)
+    grafico_html = gerar_grafico()
     return render_template("index.html", dados=dados, grafico_html=grafico_html)
 
 if __name__ == "__main__":
