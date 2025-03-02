@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clima</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <div id="clima-info">
+            <table>
+                <tr>
+                    <th>Data/Hora</th>
+                    <th>Temperatura (°C)</th>
+                    <th>Umidade (%)</th>
+                    <th>Clima</th>
+                </tr>
+                {% if dados %}
+                <tr>
+                    <td>{{ dados.data_hora }}</td>
+                    <td>{{ dados.temperatura }}</td>
+                    <td>{{ dados.umidade }}</td>
+                    <td>{{ dados.emoji }} {{ dados.clima }}</td>
+                </tr>
+                {% endif %}
+            </table>
+            {{ grafico_html|safe }}
+        </div>
+    </div>
+    <script src="/static/script.js"></script>
+</body>
+</html>
