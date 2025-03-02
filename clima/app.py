@@ -45,7 +45,7 @@ def coletar_dados():
             "emoji": emoji
         }
 
-        # Salvar no JSON
+        
         salvar_dados(novo_dado)
 
         return novo_dado
@@ -60,21 +60,21 @@ def coletar_dados():
 def salvar_dados(dado):
     """Salva os dados coletados no arquivo JSON."""
     try:
-        # Tenta carregar os dados existentes
+        
         try:
             with open(JSON_FILE, "r") as file:
                 dados = json.load(file)
         except (FileNotFoundError, json.JSONDecodeError):
             dados = []
 
-        # Adiciona o novo dado à lista
+        
         dados.append(dado)
 
-        # Mantém apenas os últimos 100 registros (opcional)
+         
         if len(dados) > 100:
             dados = dados[-100:]
 
-        # Escreve no arquivo JSON
+        
         with open(JSON_FILE, "w") as file:
             json.dump(dados, file, indent=4)
 
